@@ -63,7 +63,8 @@ class Node {
       ])
       .withMountedCache(
         "/root/.npmtest",
-        cache ?? dag.cacheVolume("npmtest")
+        // cache ?? dag.cacheVolume
+        cache ?? dag.cacheVolume("~/.npmtest")
       )
 
     return this
@@ -81,7 +82,7 @@ class Node {
     this.container = this.container
       .withEntrypoint(["npm"])
       .withMountedCache(
-        "/root/.npm*",
+        "/root/.npm",
         cache ?? dag.cacheVolume(`node-module-npm`),
       )
 
