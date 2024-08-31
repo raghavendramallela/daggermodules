@@ -51,42 +51,24 @@ class Node {
    *
    */
   @func()
-  withNpmrc(token: Secret,): Node {
-     this.container = this.container
+  withNpmrc(token: Secret, cache?: CacheVolume): Node {
+      dag.container()
+      .from("alpine")
       .withSecretVariable("TEST_ENV", token)
       .withEntrypoint([])
       .withExec([
         "sh",
         "-c",
-        `echo $TEST_ENV > ~/.testrc`,
+        `echo $TEST_ENV > ~/.npmtest`,
       ])
-      .withExec([
-        "sh",
-        "-c",
-        `cat ~/.testrc`,
-      ])
-      
-
-    return this
-  }
-
-  /**
-   * Add yarn as package manager in the container.
-   *
-   * This also update the container entrypoint to "yarn".
-   * @param cache The cache to use for the downloaded packages (default to "node-module-yarn").
-   */
-  @func()
-  withYarn(cache?: CacheVolume): Node {
-    this.container = this.container
-      .withEntrypoint(["yarn"])
       .withMountedCache(
-        "/usr/local/share/.cache/yarn",
-        cache ?? dag.cacheVolume(`node-module-yarn`),
+        "/root/.npmtest",
+        cache ?? dag.cacheVolume("npmtest")
       )
 
     return this
   }
+
 
   /**
    * Add npm as package manager in the container.
@@ -99,27 +81,8 @@ class Node {
     this.container = this.container
       .withEntrypoint(["npm"])
       .withMountedCache(
-        "/root/.npm",
+        "/root/.npm*",
         cache ?? dag.cacheVolume(`node-module-npm`),
-      )
-
-    return this
-  }
-
-  /**
-   * Add pnpm as package manager in the container.
-   *
-   * This also update the container entrypoint to "pnpm".
-   * @param cache The cache to use for the downloaded packages (default to "node-module-pnpm").
-   */
-  @func()
-  withPnpm(cache?: CacheVolume): Node {
-    this.container = this.container
-      .withExec(["npm", "install", "-g", "pnpm"])
-      .withEntrypoint(["pnpm"])
-      .withMountedCache(
-        "/pnpm/store",
-        cache ?? dag.cacheVolume(`node-module-pnpm`),
       )
 
     return this
