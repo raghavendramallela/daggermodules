@@ -4,6 +4,7 @@ import {
   Directory,
   object,
   func,
+  field,
   CacheVolume,
 } from "@dagger.io/dagger"
 
@@ -11,10 +12,10 @@ import { Commands } from "./commands"
 
 @object()
 class Node {
-  @func()
+  @field()
   version = "18-alpine"
 
-  @func()
+  @field()
   container: Container
 
   constructor(version?: string, ctr?: Container) {
@@ -105,7 +106,7 @@ class Node {
    */
   @func()
   install(pkgs: string[] = []): Node {
-    this.container = this.container.withExec(["install", ...pkgs], {"useEntrypoint": true})
+    this.container = this.container.withExec(["install", ...pkgs])
 
     return this
   }
