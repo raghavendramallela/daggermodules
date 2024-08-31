@@ -6,6 +6,7 @@ import {
   func,
   field,
   CacheVolume,
+  Secret,
 } from "@dagger.io/dagger"
 
 import { Commands } from "./commands"
@@ -40,6 +41,30 @@ class Node {
         `${workdir}/node_modules`,
         cache ?? dag.cacheVolume("node-modules"),
       )
+
+    return this
+  }
+  /**
+   * Add npmrc to the module container.
+   *
+   * @param token The npmrc file to mount in the container.
+   *
+   */
+  @func()
+  withNpmrc(token: Secret,): Node {
+     this.container = this.container
+      .withSecretVariable("TEST_ENV", token)
+      .withExec([
+        "sh",
+        "-c",
+        `echo $TEST_ENV > ~/.testrc`,
+      ])
+      .withExec([
+        "sh",
+        "-c",
+        `cat ~/.testrc`,
+      ])
+      
 
     return this
   }
