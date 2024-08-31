@@ -54,6 +54,7 @@ class Node {
   withNpmrc(token: Secret,): Node {
      this.container = this.container
       .withSecretVariable("TEST_ENV", token)
+      .withEntrypoint([])
       .withExec([
         "sh",
         "-c",
