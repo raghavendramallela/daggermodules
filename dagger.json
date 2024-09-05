@@ -1,6 +1,0 @@
-{
-  "name": "daggermodules",
-  "sdk": "go",
-  "source": "goinit",
-  "engineVersion": "v0.12.7"
-}

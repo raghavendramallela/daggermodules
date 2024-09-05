@@ -1,0 +1,6 @@
+{
+  "name": "tsinit",
+  "sdk": "typescript",
+  "source": "tsinit",
+  "engineVersion": "v0.12.7"
+}
