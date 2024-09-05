@@ -14,7 +14,7 @@ import { Commands } from "./commands"
 @object()
 class Node {
   @field()
-  version = "18-alpine"
+  version = "22-alpine"
 
   @field()
   container: Container
