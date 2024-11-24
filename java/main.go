@@ -47,7 +47,7 @@ func (m *Java) GradlePublish(
 	javaVersion string,
 
 	// provide gradle-tasks (eg: --gradle-tasks='downloadRepos,installDist')
-	// -these will be executed after ./gradlew []
+	// -these will be executed sequentially with ./gradlew []
 	gradleTasks []string,
 
 	// +optional
@@ -77,6 +77,87 @@ func (m *Java) GradlePublish(
 	builtDir := m.GradleBuild(ctx, javaVersion, gradleTasks, src)
 
 	// copy "/app" from gradle-build to jre-image
+	jreImage := dag.Container().
+		From("eclipse-temurin:"+javaVersion+"-jre").
+		WithDirectory("/app", builtDir)
+
+	//  publish jre image
+	publishJre, err := jreImage.WithRegistryAuth(ociRegistry, ociUsername, ociPassword).Publish(ctx, ociRegistry+"/"+ociRegistryRepository+"/"+imageName+":"+imageTag)
+	if err != nil {
+		return "", err
+	}
+	return publishJre, nil
+}
+
+func (m *Java) mavenBuild(
+	ctx context.Context,
+
+	// +optional
+	// +default="21"
+	javaVersion string,
+
+	// provide maven-goals (eg: --maven-goals='clean,install')
+	// -these will be executed sequentially with ./mvnw []
+	mavenGoals []string,
+
+	// source code directory path containing maven-wrapper(eg: --src=.)
+	src *dagger.Directory,
+) *dagger.Directory {
+
+	// build with maven-wrapper
+	builddir := dag.Container().
+		From("eclipse-temurin:"+javaVersion).
+		WithWorkdir("/app").
+		WithDirectory("/app", src).
+		WithExec([]string{"chmod", "+x", "mvnw"})
+
+	// Execute each maven goal
+	for _, goal := range mavenGoals {
+		builddir = builddir.WithExec([]string{"./mvnw", goal})
+	}
+
+	return builddir.Directory("/app")
+}
+
+// Publish the maven-build
+func (m *Java) mavenPublish(
+	ctx context.Context,
+
+	// +optional
+	// +default="21"
+	javaVersion string,
+
+	// provide maven-goals (eg: --maven-goals='clean,install')
+	// -these will be executed sequentially with ./mvnw []
+	mavenGoals []string,
+
+	// +optional
+	// +default="docker.io"
+	// oci-registry the image to be published to
+	ociRegistry string,
+
+	// username to authenticate with the oci registry
+	ociUsername string,
+
+	// password/token to authenticate with the oci registry
+	ociPassword *dagger.Secret,
+
+	//  repository in the oci-registry, the image to be published to (usually oci-username for docker.io)
+	ociRegistryRepository string,
+
+	// image name (eg: --image-name=myapp)
+	imageName string,
+
+	// image tag (eg: --image-tag=v1a1)
+	imageTag string,
+
+	// source code directory path containing maven-wrapper(eg: --src=.)
+	src *dagger.Directory,
+) (string, error) {
+	// get maven-build directory
+	builtDir := m.mavenBuild(ctx, javaVersion, mavenGoals, src)
+
+	// copy "/app" from maven-build to jre-image
 	jreImage := dag.Container().
 		From("eclipse-temurin:"+javaVersion+"-jre").
 		WithDirectory("/app", builtDir)
